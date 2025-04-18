@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.FetchAssessment" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.FetchAssessment.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.FetchAssessment.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.FetchAssessment.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+</resources>
