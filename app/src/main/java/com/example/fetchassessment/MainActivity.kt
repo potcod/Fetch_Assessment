@@ -1,9 +1,7 @@
-package com.example.fetchassessment
+    package com.example.fetchassessment
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.util.Log
-import android.widget.ScrollView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -17,30 +15,19 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.fetchassessment.ui.theme.FetchAssessmentTheme
 import com.example.fetchassessment.ui.theme.ItemCard
-import com.google.gson.Gson
-import retrofit2.Call
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import java.net.HttpURLConnection
-import retrofit2.Callback
-import retrofit2.Response
 
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
@@ -50,69 +37,17 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
-import kotlinx.serialization.Serializable
+import com.example.fetchassessment.ui.theme.ItemViewModel
 
-
+    val itemViewModel = ItemViewModel()
 class MainActivity : ComponentActivity() {
 
-    private val TAG: String = "CHECK_RESPONSE" // Tag to check  through LogCat
-    private val url = "https://fetch-hiring.s3.amazonaws.com/"
-    private var itemState = mutableStateOf<List<Item>>(emptyList())
-    var itemDataMap : HashMap<Int, Int > = HashMap()
 
-    private fun getData() { //Function to retrieve data from URL and add to itemState variable.
 
-        //Start retrofit with URL, give it json path in .create()
-        val api = Retrofit.Builder()
-            .baseUrl(url)
-            .addConverterFactory(GsonConverterFactory.create())//Convert from JSON to kotlin readable
-            .build()
-            .create(MyApi::class.java) //json path
-
-        api.getItems().enqueue(object : Callback<List<Item>>{
-            override fun onResponse(
-                call: Call<List<Item>?>,
-                response: Response<List<Item>?>
-            ) {
-
-                if(response.isSuccessful){
-                    Log.i(TAG, "Data Retrieved Successfully")
-                    response.body()?.let{
-
-                        // Add list to list state
-                        for(item in it){
-                            if(!item.name.isNullOrBlank()){
-                                itemState.value = itemState.value + item;
-                                if(itemDataMap.containsKey(item.listId)){
-                                    itemDataMap[item.listId] = itemDataMap.getOrDefault(item.listId, 0) + 1
-                                } else {
-                                    itemDataMap.put(item.listId, 1)
-                                }
-                            }
-                        }
-                    }
-                    Log.i("HASH", itemDataMap.toString() )
-                }
-
-                //Sort item state by "listId" first, then by "names"
-                itemState.value = itemState.value.sortedWith(compareBy ({it.listId}, {it.name.substring(5,it.name.length).toInt()}) )
-                Log.i(TAG, itemState.value.toString())
-
-            }
-            override fun onFailure(
-                call: Call<List<Item>?>,
-                t: Throwable
-            ) {
-                Log.e(TAG, "onFailure")
-            }
-        })
-    }
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        getData()
         setContent {
             FetchAssessmentTheme {
                 val navController = rememberNavController()
@@ -122,14 +57,15 @@ class MainActivity : ComponentActivity() {
                 ){
                     composable("screen_a"){
                         Scaffold(modifier = Modifier.fillMaxSize()) {
-                            AppBar(navController)
+                            AppBar(navController,
+                                itemState = itemViewModel.itemState.value)
                             ItemTable(
-                                items = itemState.value
+                                items = itemViewModel.itemState.value
                             )
                         }
                     }
                     composable("screen_b"){
-                        ScreenB(navController, itemDataMap)
+                        ScreenB(navController, itemViewModel.itemDataMap)
                     }
                 }
 
@@ -149,6 +85,7 @@ fun ItemTable(items: List<Item>) { //Function to sort and display the data from 
         }
 
         //Data rows
+
         LazyColumn( modifier = Modifier.padding(top = 0.dp)) {
             items(items) { item ->
                 Row(modifier = Modifier.padding(vertical = 4.dp)) {
@@ -164,7 +101,7 @@ fun ItemTable(items: List<Item>) { //Function to sort and display the data from 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppBar( navController: NavController //AppBar of main screen A
+fun AppBar(navController: NavController, itemState: List<Item>  //AppBar of main screen A
 ){
     TopAppBar(title = { Text(text = "Fetch Assessment", fontFamily = FontFamily.Serif, fontSize = 24.sp)},
         navigationIcon = {
@@ -178,10 +115,18 @@ fun AppBar( navController: NavController //AppBar of main screen A
             IconButton(onClick = {navController.navigate("screen_b")}) {
                 Icon(Icons.Default.Info, contentDescription = "InfoIcon", tint = Color.Unspecified,)
             }
+            IconButton(onClick = { sortData(itemState)}){
+                Icon(Icons.Default.Edit, contentDescription = "SortIcon")
+            }
+
         }
 
     )
 }
+    fun sortData(itemState:List<Item>){
+        itemViewModel.sortedItemState.value = itemViewModel.itemState.value.sortedWith(compareBy ({it.listId}, {it.name.substring(5,it.name.length).toInt()}) )
+
+    }
 
 
 
